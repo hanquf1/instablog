@@ -21,11 +21,11 @@
     {% empty%}
     <p> 글이 없습니다.</p>
     {% endfor %}
-    <div class="row">
+    <row>
         <div class="col-md-3 col-md-offset-3">
             <a href="/posts/create" class="btn btn-primary " role="button">글 쓰기</a>
         </div>
-    </div>
+    </row>
     <row class="col-md-12">
         {% bootstrap_pagination posts%}
     </row>

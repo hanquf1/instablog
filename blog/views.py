@@ -6,11 +6,14 @@ from django.http import HttpResponse
 from django.core.paginator import Paginator
 from django.core.paginator import PageNotAnInteger # 숫자가 아닐경우
 from django.core.paginator import EmptyPage #빈 값일 경우 
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import permission_required
+from django.contrib.auth.models import PermissionDenied
 
 from .models import Post
 from .models import Category
-from .models import Comment
-
+from .forms import PostForm
+from .forms import PostEditForm
 def hello(request):
     res = HttpResponse('hello world')
     return res
@@ -38,17 +41,6 @@ def list_posts(request):
     })
 
 def view_post(request,pk):
-    if request.method == 'POST':
-        new_comment = Comment()
-        new_comment.content = request.POST.get('content')
-
-        print(new_comment.content)
-        the_post = get_object_or_404(Post,pk=pk)
-        new_comment.post = the_post
-        
-        new_comment.save()
-        
-        print('view_post')
     the_post = get_object_or_404(Post,pk=pk)
     #the_post = Post.objects.get(pk=pk)
 
@@ -56,60 +48,39 @@ def view_post(request,pk):
         'post': the_post
     })
 
-def add_comment(request):
-    print('add_comment')
+@login_required
+# @permission_required('blog.delete_post',raise_exception=True)
+def delete_post(request,pk):
+    the_post = get_object_or_404(Post,pk=pk)
+    if request.user.id != the_post.user.id:
+        raise PermissionDenied
     if request.method == 'POST':
-        new_comment = Comment()
-        new_comment.content = request.POST.get('content')
+        the_post.delete()    
+        return redirect('list_posts')
 
-        post_id = request.POST.get('post_id')
-        the_post = get_object_or_404(Post,pk=post_id)
-        new_comment.post = the_post
-        new_comment.save()
+    return render(request, 'view_post.html',{
+        'post': the_post
+    })
 
-    return redirect('view_post',pk=post_id)
-
-def delete_comment(request):
-    print('delete_comment')
-    if request.method == 'POST':
-        new_comment = Comment()
-        new_comment.id = request.POST.get('comment_id')
-
-        print(new_comment.id)
-
-        post_id = request.POST.get('post_id')
-        the_post = get_object_or_404(Post,pk=post_id)
-
-        new_comment.delete()
-
-    return redirect('view_post',pk=post_id)
-
-
+@login_required
 def create_post(request):
     categories = Category.objects.all()
 
     if request.method == 'GET':
-        pass
+        form = PostEditForm()
+
     elif request.method == 'POST':
-        new_post = Post()
-        new_post.title = request.POST.get('title')
-        new_post.content = request.POST.get('content')
-        # new_post.title = request.POST.get('title')
+        form = PostEditForm(request.POST)
+        if form.is_valid():
+            new_post = form.save(commit=False)
+            new_post.user = request.user
+            new_post.save()
+            
+            return redirect('view_post',pk=new_post.pk)
 
-        print(request.POST)
-        category_pk = request.POST.get('category')
-        print(category_pk)
-        category = get_object_or_404(Category,pk=category_pk)
-        new_post.category = category
-        new_post.save()
-
-        return redirect('view_post',pk=new_post.pk)
-
-
-
-    
     return render(request, 'create_post.html',{
         'categories':categories,
+        'form':form,
     })
 
 

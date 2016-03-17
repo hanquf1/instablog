@@ -1,7 +1,9 @@
 from django.db import models
+from django.conf import settings
 
 
 class Post(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL)
     tags = models.ManyToManyField('Tag')# 문자열로 연결하면 모델을 전부 다 읽고 나서 나중에 평가해서 관계를 맺어준다. app_name.Tag 라고 하면 다른 앱에있는거 가져온다.
     category = models.ForeignKey('Category', null=True)
     #### 모델의 기본적인 형태####
@@ -27,7 +29,9 @@ class Comment(models.Model):
     content = models.TextField(max_length=500)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
+    
+    def __str__(self):
+        return '{} of {}'.format(self.pk, self.post.pk)
 
 class Tag(models.Model):
     name = models.CharField(max_length=40)

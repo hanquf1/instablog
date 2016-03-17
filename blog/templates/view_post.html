@@ -4,7 +4,12 @@
 {%block content%}
     <div class="post_container">
         <h3> <a href="{% url 'view_post' pk=post.pk %}">{{post.id}}번글 {{post.title}}</a> </h3>
-        
+
+        <form method="POST" action="/delete_post/{{post.pk}}/">
+        {% csrf_token %}
+            <button class="btn btn-danger" value="post.pk" name="pk" type="submit">삭제</button>
+        </form>
+
         <div class="post_content">
             {{post.content}}
         </div>
@@ -14,8 +19,4 @@
         </div>
         <br><br>
     </div>
-
-    {% with comments=post.comment_set.all post_id=post.id %}
-        {% include 'list_comments.html'%}
-    {% endwith %}
 {%endblock%}
